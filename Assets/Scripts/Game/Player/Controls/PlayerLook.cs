@@ -1,38 +1,30 @@
 using UnityEngine;
 
-namespace Core.Game.Player.Controls
+public class PlayerLook : MonoBehaviour
 {
-    [RequireComponent(typeof(Core.Game.Player.PlayerReferences))]
-    [RequireComponent(typeof(PlayerInputHandler))]
-    public class PlayerLook : MonoBehaviour
+    [SerializeField] private Transform cameraPivot;
+    [SerializeField] private float sensitivity = 2f;
+    [SerializeField] private float maxYAngle = 85f;
+
+    private Vector2 lookInput;
+    private float pitch;
+
+    private void Awake()
     {
-        [SerializeField] private float sensitivity = 2f;
-        [SerializeField] private float maxYAngle = 85f;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
 
-        private PlayerReferences refs;
-        private PlayerInputHandler input;
-        private Transform camPivot;
-        private float pitch;
+    public void SetLookInput(Vector2 input) => lookInput = input;
 
-        private void Awake()
-        {
-            refs = GetComponent<PlayerReferences>();
-            input = GetComponent<PlayerInputHandler>();
-            camPivot = refs.CameraPivot;
+    private void LateUpdate()
+    {
+        Vector2 delta = lookInput * sensitivity * Time.deltaTime;
 
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
+        pitch -= delta.y;
+        pitch = Mathf.Clamp(pitch, -maxYAngle, maxYAngle);
 
-        private void LateUpdate()
-        {
-            Vector2 delta = input.LookInput * sensitivity * Time.deltaTime;
-
-            pitch -= delta.y;
-            pitch = Mathf.Clamp(pitch, -maxYAngle, maxYAngle);
-
-            camPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
-            transform.Rotate(Vector3.up * delta.x);
-        }
+        cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        transform.Rotate(Vector3.up * delta.x);
     }
 }

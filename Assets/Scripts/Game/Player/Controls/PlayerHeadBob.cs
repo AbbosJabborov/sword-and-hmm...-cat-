@@ -2,7 +2,6 @@ using UnityEngine;
 
 namespace Core.Game.Player.Controls
 {
-    [RequireComponent(typeof(PlayerReferences))]
     public class PlayerHeadBob : MonoBehaviour
     {
         [Header("Bob Settings")]
@@ -13,22 +12,45 @@ namespace Core.Game.Player.Controls
         [SerializeField] private float smoothTime = 0.08f;
         [SerializeField] private float moveThreshold = 0.1f;
 
-        private PlayerReferences refs;
-        private Transform cameraPivot;
-        private CharacterController controller;
+        [Header("References (optional)")]
+        [SerializeField] private CharacterController controller;
+        [SerializeField] private Transform cameraPivot;
+
         private Vector3 initialLocalPos;
         private float bobTimer;
         private Vector3 smoothVelocity;
 
         private void Awake()
         {
-            refs = GetComponent<PlayerReferences>();
-            controller = refs.Controller;
-            cameraPivot = refs.CameraPivot;
+            // Try assigned refs first, then fall back to common lookups
+            if (controller == null)
+            {
+                controller = GetComponent<CharacterController>()
+                             ?? GetComponentInChildren<CharacterController>()
+                             ?? GetComponentInParent<CharacterController>();
+            }
+
+            if (cameraPivot == null)
+            {
+                // Prefer an explicitly named pivot child
+                var pivot = transform.Find("CameraPivot");
+                if (pivot != null) cameraPivot = pivot;
+
+                // If not found, prefer the main camera's parent (common setup)
+                if (cameraPivot == null && Camera.main != null)
+                    cameraPivot = Camera.main.transform.parent ?? Camera.main.transform;
+
+                // Last resort: any Camera inside this object
+                if (cameraPivot == null)
+                {
+                    var cam = GetComponentInChildren<Camera>();
+                    if (cam != null) cameraPivot = cam.transform.parent ?? cam.transform;
+                }
+            }
 
             if (cameraPivot == null || controller == null)
             {
-                Debug.LogWarning("PlayerHeadBob: Missing references. Disabling.");
+                Debug.LogWarning("PlayerHeadBob: Missing CharacterController or Camera pivot. Disabling.");
                 enabled = false;
                 return;
             }
@@ -61,7 +83,10 @@ namespace Core.Game.Player.Controls
                 Vector3.SmoothDamp(cameraPivot.localPosition, targetLocal, ref smoothVelocity, smoothTime);
         }
 
-        public void ResetToInitial() =>
-            cameraPivot.localPosition = initialLocalPos;
+        public void ResetToInitial()
+        {
+            if (cameraPivot != null)
+                cameraPivot.localPosition = initialLocalPos;
+        }
     }
 }
