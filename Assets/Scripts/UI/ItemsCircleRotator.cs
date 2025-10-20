@@ -1,43 +1,44 @@
-// csharp
-// File: `Assets/Scripts/UI/ItemsCircleRotator.cs`
-using UnityEngine;
 using DG.Tweening;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class ItemsCircleRotator : MonoBehaviour
+namespace UI
 {
-    [SerializeField] private GameObject itemsCircle;
-    [SerializeField] private float rotationDuration = 0.5f;
-    private Tween currentTween;
-
-    public void OnPrevious(InputAction.CallbackContext context)
+    public class ItemsCircleRotator : MonoBehaviour
     {
-        if (!context.performed) return;
-        TryRotate(-90f);
-    }
+        [SerializeField] private GameObject itemsCircle;
+        [SerializeField] private float rotationDuration = 0.5f;
+        private Tween _currentTween;
 
-    public void OnNext(InputAction.CallbackContext context)
-    {
-        if (!context.performed) return;
-        TryRotate(90f);
-    }
+        public void OnPrevious(InputAction.CallbackContext context)
+        {
+            if (!context.performed) return;
+            TryRotate(-90f);
+        }
 
-    private void TryRotate(float delta)
-    {
-        if (currentTween != null && currentTween.IsActive() && currentTween.IsPlaying()) return;
+        public void OnNext(InputAction.CallbackContext context)
+        {
+            if(!context.performed) return;
+            TryRotate(90f);
+        }
 
-        float startZ = itemsCircle.transform.rotation.eulerAngles.z;
-        float targetZ = startZ + delta;
+        private void TryRotate(float delta)
+        {
+            if (_currentTween != null && _currentTween.IsActive() && _currentTween.IsPlaying()) return;
 
-        currentTween = itemsCircle.transform
-            .DORotate(new Vector3(0, 0, targetZ), rotationDuration, RotateMode.FastBeyond360)
-            .SetEase(Ease.OutBack)
-            .OnComplete(() => currentTween = null);
-    }
+            float startZ = itemsCircle.transform.rotation.eulerAngles.z;
+            float targetZ = startZ + delta;
 
-    private void OnDisable()
-    {
-        currentTween?.Kill();
-        currentTween = null;
+            _currentTween = itemsCircle.transform
+                .DORotate(new Vector3(0, 0, targetZ), rotationDuration, RotateMode.FastBeyond360)
+                .SetEase(Ease.OutBack)
+                .OnComplete(() => _currentTween = null);
+        }
+
+        private void OnDisable()
+        {
+            _currentTween?.Kill();
+            _currentTween = null;
+        }
     }
 }
