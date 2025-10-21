@@ -92,6 +92,7 @@ MonoBehaviour:
   - {fileID: -7893295128165547882}
   - {fileID: 7391319092446245454}
   - {fileID: -3357603926938260329}
+  - {fileID: 3509442103926602019}
 --- !u!114 &849379129802519247
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -132,6 +133,63 @@ MonoBehaviour:
   maxNits:
     m_OverrideState: 1
     m_Value: 647
+--- !u!114 &3509442103926602019
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bed3bcc1a19484cbcf21c4f76c26381, type: 3}
+  m_Name: DarkbringerVolume
+  m_EditorClassIdentifier: Assembly-CSharp::Extensions.DarkbringerVolume
+  active: 1
+  ColorBleed:
+    m_OverrideState: 1
+    m_Value: 0.25
+  LinesMult:
+    m_OverrideState: 1
+    m_Value: 0.8
+  ColorShift:
+    m_OverrideState: 1
+    m_Value: 0.29
+  newScreenSize:
+    m_OverrideState: 1
+    m_Value: {x: 800, y: 600}
+  screenStretching:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1}
+  CustomScreenSize:
+    m_OverrideState: 1
+    m_Value: 1
+  AspectRatioBars:
+    m_OverrideState: 1
+    m_Value: 1
+  OneBitColor:
+    m_OverrideState: 1
+    m_Value: 0
+  VerticalLines:
+    m_OverrideState: 1
+    m_Value: 0
+  HorizontalLines:
+    m_OverrideState: 1
+    m_Value: 0
+  Dithering:
+    m_OverrideState: 1
+    m_Value: 1
+  Paletting:
+    m_OverrideState: 1
+    m_Value: 1
+  Lut2D:
+    m_OverrideState: 1
+    m_Value: {fileID: 2800000, guid: dc6c5d1dde074fc41b7d214a43eee86f, type: 3}
+    dimension: 1
+  BayerTex:
+    m_OverrideState: 1
+    m_Value: {fileID: 2800000, guid: eac7505667530464e91debe0b4a8492b, type: 3}
+    dimension: 1
 --- !u!114 &7391319092446245454
 MonoBehaviour:
   m_ObjectHideFlags: 3

@@ -342,6 +342,9 @@ MonoBehaviour:
   skyOcclusionIntensityMultiplier:
     m_OverrideState: 1
     m_Value: 1
+  worldOffset:
+    m_OverrideState: 1
+    m_Value: {x: 0, y: 0, z: 0}
 --- !u!114 &-1216621516061285780
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -462,8 +465,7 @@ MonoBehaviour:
   - {fileID: -6288072647309666549}
   - {fileID: 7518938298396184218}
   - {fileID: -1410297666881709256}
-  - {fileID: -7750755424749557576}
-  - {fileID: -5139089513906902183}
+  - {fileID: 8893327786180309044}
 --- !u!114 &853819529557874667
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -921,6 +923,63 @@ MonoBehaviour:
   scale:
     m_OverrideState: 1
     m_Value: 1
+--- !u!114 &8893327786180309044
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bed3bcc1a19484cbcf21c4f76c26381, type: 3}
+  m_Name: DarkbringerVolume
+  m_EditorClassIdentifier: Assembly-CSharp::Extensions.DarkbringerVolume
+  active: 1
+  ColorBleed:
+    m_OverrideState: 1
+    m_Value: 0.25
+  LinesMult:
+    m_OverrideState: 1
+    m_Value: 0.8
+  ColorShift:
+    m_OverrideState: 1
+    m_Value: 0.29
+  newScreenSize:
+    m_OverrideState: 1
+    m_Value: {x: 200, y: 200}
+  screenStretching:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1}
+  CustomScreenSize:
+    m_OverrideState: 1
+    m_Value: 1
+  AspectRatioBars:
+    m_OverrideState: 1
+    m_Value: 1
+  OneBitColor:
+    m_OverrideState: 1
+    m_Value: 0
+  VerticalLines:
+    m_OverrideState: 1
+    m_Value: 0
+  HorizontalLines:
+    m_OverrideState: 1
+    m_Value: 0
+  Dithering:
+    m_OverrideState: 1
+    m_Value: 1
+  Paletting:
+    m_OverrideState: 1
+    m_Value: 1
+  Lut2D:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+    dimension: 1
+  BayerTex:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+    dimension: 1
 --- !u!114 &9001657382290151224
 MonoBehaviour:
   m_ObjectHideFlags: 3
