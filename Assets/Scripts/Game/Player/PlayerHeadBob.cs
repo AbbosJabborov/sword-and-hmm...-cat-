@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Game.Player.Controls
+namespace Game.Player
 {
     public class PlayerHeadBob : MonoBehaviour
     {
@@ -12,26 +12,27 @@ namespace Game.Player.Controls
         [SerializeField] private float smoothTime = 0.08f;
         [SerializeField] private float moveThreshold = 0.1f;
 
-        [Header("References (optional)")]
-        [SerializeField] private CharacterController controller;
+        [Header("References")]
+        [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private Transform cameraPivot;
 
         private Vector3 _initialLocalPos;
         private float _bobTimer;
         private Vector3 _smoothVelocity;
+        private Vector2 _lastMoveInput;
 
         private void Awake()
         {
-            if (controller == null)
+            if (playerMovement == null)
             {
-                controller = GetComponent<CharacterController>();
+                playerMovement = GetComponent<PlayerMovement>();
             }
             if (cameraPivot == null)
             {
                 cameraPivot = Camera.main?.transform;
             }
 
-            if (cameraPivot == null || controller == null)
+            if (cameraPivot == null || playerMovement == null)
             {
                 enabled = false;
                 return;
@@ -43,15 +44,14 @@ namespace Game.Player.Controls
         private void LateUpdate()
         {
             float dt = Time.deltaTime;
-            Vector3 horizVel = controller.velocity;
-            horizVel.y = 0f;
-            float speed = horizVel.magnitude;
+            float speed = _lastMoveInput.magnitude;
 
             Vector3 targetLocal = _initialLocalPos;
 
-            if (controller.isGrounded && speed > moveThreshold)
+            if (playerMovement.IsGrounded && speed > moveThreshold)
             {
-                _bobTimer += dt * bobSpeed * (1f + speed * 0.1f);
+                float speedMultiplier = playerMovement.IsRunning ? 1.5f : 1f;
+                _bobTimer += dt * bobSpeed * speedMultiplier;
                 float y = Mathf.Sin(_bobTimer) * bobAmount + midpoint;
                 float x = Mathf.Cos(_bobTimer * 2f) * bobSideAmount;
                 targetLocal = _initialLocalPos + new Vector3(x, y, 0f);
@@ -61,8 +61,13 @@ namespace Game.Player.Controls
                 _bobTimer = 0f;
             }
 
-            cameraPivot.localPosition =
+            cameraPivot.localPosition = 
                 Vector3.SmoothDamp(cameraPivot.localPosition, targetLocal, ref _smoothVelocity, smoothTime);
+        }
+
+        public void UpdateMovement(Vector2 moveInput, bool isRunning)
+        {
+            _lastMoveInput = moveInput;
         }
 
         public void ResetToInitial()

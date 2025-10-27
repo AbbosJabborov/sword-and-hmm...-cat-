@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Game.Player.Controls
+namespace Game.Player
 {
     [RequireComponent(typeof(CharacterController))]
     public class PlayerMovement : MonoBehaviour
@@ -9,6 +9,9 @@ namespace Game.Player.Controls
         [SerializeField] private float runSpeed = 7f;
         [SerializeField] private float gravity = -9.81f;
         [SerializeField] private float jumpHeight = 1.5f;
+        
+        public bool IsGrounded => _isGrounded;
+        public bool IsRunning => _isRunning;
 
         private CharacterController _controller;
         private Vector2 _moveInput;

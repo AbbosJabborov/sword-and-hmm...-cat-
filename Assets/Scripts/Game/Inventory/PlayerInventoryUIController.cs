@@ -1,4 +1,5 @@
 using DG.Tweening;
+using Game.Player;
 using Game.Player.Controls;
 using UnityEngine;
 using UnityEngine.InputSystem;

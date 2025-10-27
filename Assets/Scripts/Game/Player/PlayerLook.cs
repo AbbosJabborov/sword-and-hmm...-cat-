@@ -1,13 +1,13 @@
 using UnityEngine;
 
-namespace Game.Player.Controls
+namespace Game.Player
 {
     public class PlayerLook : MonoBehaviour
     {
         [SerializeField] private Transform cameraPivot;
         [SerializeField] private float sensitivity = 2f;
         [SerializeField] private float maxYAngle = 85f;
-
+        
         private Vector2 _lookInput;
         private float _pitch;
 
