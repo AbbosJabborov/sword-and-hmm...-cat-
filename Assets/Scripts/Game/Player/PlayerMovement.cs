@@ -8,40 +8,44 @@ namespace Game.Player
         [SerializeField] private float walkSpeed = 4f;
         [SerializeField] private float runSpeed = 7f;
         [SerializeField] private float gravity = -9.81f;
-        [SerializeField] private float jumpHeight = 1.5f;
+        [SerializeField] private float rotationSpeed = 10f; // Smooth rotation toward movement
         
-        public bool IsGrounded => _isGrounded;
-        public bool IsRunning => _isRunning;
+        public bool IsGrounded => isGrounded;
+        public bool IsRunning => isRunning;
+        public Vector3 CurrentVelocity => velocity;
 
-        private CharacterController _controller;
-        private Vector2 _moveInput;
-        private Vector3 _velocity;
-        private bool _isGrounded;
-        private bool _isRunning;
+        private CharacterController controller;
+        private Vector2 moveInput;
+        private Vector3 velocity;
+        private bool isGrounded;
+        private bool isRunning;
 
-        private void Awake() => _controller = GetComponent<CharacterController>();
+        private void Awake() => controller = GetComponent<CharacterController>();
 
-        public void SetMoveInput(Vector2 input) => _moveInput = input;
-        public void SetRunning(bool running) => _isRunning = running;
-
-        public void Jump()
-        {
-            if (_isGrounded)
-                _velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        }
+        public void SetMoveInput(Vector2 input) => moveInput = input;
+        public void SetRunning(bool running) => isRunning = running;
 
         private void FixedUpdate()
         {
-            _isGrounded = _controller.isGrounded;
+            isGrounded = controller.isGrounded;
+            
+            Vector3 moveDirection = new Vector3(moveInput.x, 0, moveInput.y).normalized;
+            
+            if (moveDirection.magnitude > 0.1f)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+                transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            }
 
-            float speed = _isRunning ? runSpeed : walkSpeed;
-            Vector3 move = (transform.right * _moveInput.x + transform.forward * _moveInput.y).normalized;
-            _controller.Move(move * (speed * Time.deltaTime));
+            // Apply movement in world space (not character-relative)
+            float speed = isRunning ? runSpeed : walkSpeed;
+            controller.Move(moveDirection * (speed * Time.deltaTime));
 
-            if (_isGrounded && _velocity.y < 0)
-                _velocity.y = -2f;
-            _velocity.y += gravity * Time.deltaTime;
-            _controller.Move(_velocity * Time.deltaTime);
+            // Handle gravity
+            if (isGrounded && velocity.y < 0)
+                velocity.y = -2f;
+            velocity.y += gravity * Time.deltaTime;
+            controller.Move(velocity * Time.deltaTime);
         }
     }
 }

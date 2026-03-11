@@ -14,10 +14,7 @@ namespace Game.Inventory
         [SerializeField] private float visibleX = 0f;
         [SerializeField] private float tweenTime = 0.25f;
 
-        [Header("Player References")]
-        [SerializeField] private PlayerLook playerLook;
-
-        private bool _inventoryVisible;
+        private bool inventoryVisible;
 
         private void Start()
         {
@@ -34,31 +31,22 @@ namespace Game.Inventory
 
         private void ShowInventory()
         {
-            if (_inventoryVisible) return;
-            _inventoryVisible = true;
+            if (inventoryVisible) return;
+            inventoryVisible = true;
 
             // Slide in
             inventoryPanel.DOAnchorPosX(visibleX, tweenTime).SetEase(Ease.OutCubic);
             
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            if (playerLook != null)
-                playerLook.enabled = false;
         }
 
         private void HideInventory()
         {
-            if (!_inventoryVisible) return;
-            _inventoryVisible = false;
+            if (!inventoryVisible) return;
+            inventoryVisible = false;
 
             // Slide out
             inventoryPanel.DOAnchorPosX(hiddenX, tweenTime).SetEase(Ease.InCubic);
-
-            // Relock cursor and re-enable look
-            if (playerLook != null)
-                playerLook.enabled = true;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            
         }
     }
 }

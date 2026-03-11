@@ -1,30 +1,51 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Game.Inventory
 {
     public class PlayerInventory : MonoBehaviour
     {
-        private readonly List<ItemData> _items = new();
+        public Dictionary<string, int> Items = new();
+        
+        public UnityEvent<string, int> OnItemAdded = new(); // itemName, newQuantity
+        public UnityEvent<string, int> OnItemRemoved = new(); // itemName, newQuantity
 
-        public event System.Action<ItemData> OnItemAdded;
-        public IReadOnlyList<ItemData> Items => _items;
-
-        public void AddItem(ItemData item)
+        public void AddItem(string itemName, int quantity = 1)
         {
-            if (item == null) return;
-
-            _items.Add(item);
-            Debug.Log($"[Inventory] Added: {item.itemName}");
-            OnItemAdded?.Invoke(item);
+            if (!Items.ContainsKey(itemName))
+                Items[itemName] = 0;
+            
+            Items[itemName] += quantity;
+            OnItemAdded?.Invoke(itemName, Items[itemName]);
         }
 
-        public bool HasItem(ItemData item) => _items.Contains(item);
-
-        public void RemoveItem(ItemData item)
+        public bool RemoveItem(string itemName, int quantity = 1)
         {
-            if (_items.Remove(item))
-                Debug.Log($"[Inventory] Removed: {item.itemName}");
+            if (!Items.ContainsKey(itemName) || Items[itemName] < quantity)
+                return false;
+
+            Items[itemName] -= quantity;
+            if (Items[itemName] <= 0)
+                Items.Remove(itemName);
+            
+            OnItemRemoved?.Invoke(itemName, Items.ContainsKey(itemName) ? Items[itemName] : 0);
+            return true;
+        }
+
+        public int GetItemCount(string itemName)
+        {
+            return Items.ContainsKey(itemName) ? Items[itemName] : 0;
+        }
+
+        public bool HasItem(string itemName, int quantity = 1)
+        {
+            return GetItemCount(itemName) >= quantity;
+        }
+
+        public void ClearInventory()
+        {
+            Items.Clear();
         }
     }
 }
