@@ -68,8 +68,8 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 3016479151454471876, guid: 8fb43deb9daaca14b8f06644105788a8, type: 3}
-  - {fileID: 1886820026795636259, guid: 8fb43deb9daaca14b8f06644105788a8, type: 3}
+  - {fileID: 2100000, guid: 7502983535cdb6adfb5a0eb471b64a82, type: 2}
+  - {fileID: 2100000, guid: 7d166e4d7442900ecabe5dd821932eec, type: 2}
   - {fileID: 3780671244086486322, guid: 8fb43deb9daaca14b8f06644105788a8, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
@@ -129,7 +129,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Interaction.ResourceNode
   resourceType: 1
-  harvestAmount: 1
+  harvestAmountMin: 2
+  harvestAmountMax: 4
   respawnTime: 120
   harvestSound: {fileID: 0}
   harvestEffect: {fileID: 0}

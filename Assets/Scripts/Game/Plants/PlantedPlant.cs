@@ -30,7 +30,7 @@ namespace Game.Plants
 
         private void Start()
         {
-            _airQuality = FindObjectOfType<AirQualitySystem>();
+            _airQuality = FindFirstObjectByType<AirQualitySystem>();
             UpdateVisuals();
         }
 

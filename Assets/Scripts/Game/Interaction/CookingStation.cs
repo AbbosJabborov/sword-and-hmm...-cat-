@@ -1,86 +1,92 @@
+using Game.Cooking;
 using Game.Inventory;
 using Game.Systems;
+using UI;
+using TMPro;
 using UnityEngine;
 
 namespace Game.Interaction
 {
     public class CookingStation : MonoBehaviour, IInteractable
     {
-        [Header("Audio/Effects")]
+        [SerializeField] private CookingMinigame cookingMinigame;
+        [SerializeField] private TextMeshProUGUI interactPrompt;
         [SerializeField] private AudioClip cookingSound;
-        [SerializeField] private GameObject cookingEffect;
 
-        [Header("Recipes")]
-        [SerializeField] private float mushroomCookingCost = 1f; // pollution percentage
-        [SerializeField] private float berriesCookingCost = 0.5f;
+        private HotbarUI hotbar;
+        private PlayerInventory inventory;
+        private AirQualitySystem airQuality;
+        private bool isNearby = false;
+
+        private void Start()
+        {
+            hotbar = FindFirstObjectByType<HotbarUI>();
+            inventory = FindFirstObjectByType<PlayerInventory>();
+            airQuality = FindFirstObjectByType<AirQualitySystem>();
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.CompareTag("Player"))
+                isNearby = true;
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            if (other.CompareTag("Player"))
+                isNearby = false;
+        }
 
         public void Interact(GameObject interactor)
         {
-            Debug.Log("Player opened cooking menu at station");
-            // TODO: Open cooking UI panel here
-            // CookingUI.Instance.Show(interactor.GetComponent<PlayerInventory>(), this);
-        }
-
-        public bool TryCookMushroom(PlayerInventory inventory, AirQualitySystem airQuality, HungerSystem hunger)
-        {
-            if (!inventory.RemoveItem("mushroom", 1))
-            {
-                Debug.Log("Not enough mushrooms!");
-                return false;
-            }
-
-            if (!inventory.RemoveItem("wood", 1))
-            {
-                Debug.Log("Not enough wood!");
-                inventory.AddItem("mushroom", 1); // Give back the mushroom
-                return false;
-            }
-
-            // Cook successful
-            inventory.AddItem("cooked_mushroom", 1);
-            airQuality.AddPollution(mushroomCookingCost);
-            PlayCookingEffects();
+            if (!isNearby || cookingMinigame.IsActive) return;
             
-            Debug.Log("Cooked mushroom!");
-            return true;
-        }
+            string selectedFood = hotbar.GetCurrentSelectedItem();
+            int quantity = hotbar.GetCurrentSelectedQuantity();
 
-        public bool TryCookBerries(PlayerInventory inventory, AirQualitySystem airQuality, HungerSystem hunger)
-        {
-            if (!inventory.RemoveItem("berry", 2))
+            // Check if selected item is cookable
+            if (!IsCookable(selectedFood) || quantity == 0)
             {
-                Debug.Log("Need 2 berries to cook!");
-                return false;
+                if (interactPrompt)
+                    interactPrompt.text = "Select food to cook!";
+                return;
             }
 
-            if (!inventory.RemoveItem("wood", 1))
+            // Check if player has wood
+            if (!inventory.HasItem("wood", 1))
             {
-                Debug.Log("Not enough wood!");
-                inventory.AddItem("berry", 2); // Give back the berries
-                return false;
+                if (interactPrompt)
+                    interactPrompt.text = "Need wood to cook!";
+                return;
             }
 
-            // Cook successful
-            inventory.AddItem("cooked_berries", 1);
-            airQuality.AddPollution(berriesCookingCost);
-            PlayCookingEffects();
-            
-            Debug.Log("Cooked berries!");
-            return true;
-        }
+            // Start cooking
+            float energy = hotbar.GetFoodEnergy(selectedFood);
+            cookingMinigame.StartCooking(selectedFood, energy, inventory, airQuality);
 
-        private void PlayCookingEffects()
-        {
             if (cookingSound)
                 AudioSource.PlayClipAtPoint(cookingSound, transform.position);
-            if (cookingEffect)
-                Instantiate(cookingEffect, transform.position, Quaternion.identity);
+        }
+
+        public void StopCooking()
+        {
+            cookingMinigame.StopCooking();
+        }
+
+        private bool IsCookable(string foodName)
+        {
+            return foodName switch
+            {
+                "berry" => true,
+                "mushroom" => true,
+                _ => false
+            };
         }
 
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawWireCube(transform.position, Vector3.one * 0.7f);
+            Gizmos.DrawWireCube(transform.position, Vector3.one * 1.5f);
         }
     }
 }
