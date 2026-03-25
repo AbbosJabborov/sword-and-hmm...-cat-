@@ -7,7 +7,6 @@ namespace Game.Inventory
     {
         public string itemName;
         public Sprite icon;
-        [TextArea] public string description;
-        public int maxStack = 1;
+        public int energyAmount;
     }
 }

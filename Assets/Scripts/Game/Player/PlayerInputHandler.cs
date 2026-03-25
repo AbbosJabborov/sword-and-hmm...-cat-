@@ -25,6 +25,15 @@ namespace Game.Player
         public void OnRun(InputAction.CallbackContext context)
             => movement.SetRunning(context.ReadValueAsButton());
 
+        public void OnJump(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+            {
+                Debug.Log("[INPUT] Space pressed (Jump)");
+                movement.Jump();
+            }
+        }
+
         public void OnInteract(InputAction.CallbackContext context)
         {
             if (context.performed)
