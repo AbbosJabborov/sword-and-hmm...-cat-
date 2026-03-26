@@ -1,5 +1,4 @@
-﻿using Game.Inventory;
-using Game.Systems;
+﻿using Game.Systems;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,6 +9,7 @@ namespace Game.Interaction
     {
         None,
         Gather,
+        Cook,
         Eat
     }
 
@@ -28,6 +28,7 @@ namespace Game.Interaction
         private IInteractable currentInteractable;
         private HungerSystem hungerSystem;
         private UI.HotbarUI hotbar;
+        private CookingStation currentCookingStation;
         private InteractionType currentInteractionType = InteractionType.None;
         private bool isHoldingConsume = false;
 
@@ -45,12 +46,28 @@ namespace Game.Interaction
             // Check for nearby interactables
             Collider[] hits = Physics.OverlapSphere(transform.position, interactRange, interactableLayer);
             currentInteractable = null;
+            currentCookingStation = null;
             currentInteractionType = InteractionType.None;
 
             foreach (var hit in hits)
             {
                 IInteractable interactable = hit.GetComponent<IInteractable>();
-                if (interactable != null)
+                CookingStation cookingStation = hit.GetComponent<CookingStation>();
+
+                if (cookingStation != null)
+                {
+                    currentCookingStation = cookingStation;
+                    currentInteractionType = InteractionType.Cook;
+                    
+                    if (interactPrompt)
+                        interactPrompt.text = "[F] Cook";
+                    
+                    if (consumePrompt)
+                        consumePrompt.text = "";
+                    
+                    break;
+                }
+                else if (interactable != null)
                 {
                     currentInteractable = interactable;
                     currentInteractionType = InteractionType.Gather;
@@ -66,7 +83,7 @@ namespace Game.Interaction
             }
 
             // Check if player has food selected in hotbar
-            if (currentInteractable == null && hotbar)
+            if (currentInteractable == null && currentCookingStation == null && hotbar)
             {
                 string selectedFood = hotbar.GetCurrentSelectedItem();
                 if (!string.IsNullOrEmpty(selectedFood))
@@ -77,8 +94,8 @@ namespace Game.Interaction
                         interactPrompt.text = "";
                     
                     if (consumePrompt)
-                        consumePrompt.text = "[R] Consume";
-                        // consumePrompt.text = $"[R] Eat ({selectedFood})";
+                        consumePrompt.text = $"[R] Eat";
+                        //consumePrompt.text = $"[R] Eat ({selectedFood})";
                 }
                 else
                 {
@@ -88,7 +105,7 @@ namespace Game.Interaction
             }
 
             // Clear prompts if nothing nearby
-            if (currentInteractable == null && currentInteractionType == InteractionType.None)
+            if (currentInteractable == null && currentCookingStation == null && currentInteractionType == InteractionType.None)
             {
                 if (interactPrompt)
                     interactPrompt.text = "";
@@ -99,10 +116,15 @@ namespace Game.Interaction
 
         public void OnInteract(GameObject interactor)
         {
-            if (currentInteractable != null && currentInteractionType == InteractionType.Gather)
+            if (currentInteractionType == InteractionType.Gather && currentInteractable != null)
             {
                 Debug.Log($"[INTERACT] Interaction type: Gather");
                 currentInteractable.Interact(interactor);
+            }
+            else if (currentInteractionType == InteractionType.Cook && currentCookingStation != null)
+            {
+                Debug.Log($"[INTERACT] Interaction type: Cook");
+                currentCookingStation.Interact(interactor);
             }
         }
 
@@ -118,13 +140,11 @@ namespace Game.Interaction
                     isHoldingConsume = true;
                     Debug.Log($"[CONSUME] Started eating: {selectedFood}");
                     
-                    // Show progress circle
                     if (progressCircleCanvasGroup)
                         progressCircleCanvasGroup.alpha = 1f;
                     if (progressCircleImage)
                         progressCircleImage.fillAmount = 0f;
 
-                    // Start eating
                     hungerSystem.StartEating(selectedFood);
                 }
                 else
@@ -141,7 +161,6 @@ namespace Game.Interaction
                 isHoldingConsume = false;
                 Debug.Log($"[CONSUME] Released eat action");
 
-                // Hide progress circle
                 if (progressCircleCanvasGroup)
                     progressCircleCanvasGroup.alpha = 0f;
             }

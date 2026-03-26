@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff1ab1f644604ddcaa007abe9feb04df, type: 3}
   m_Name: Berry
   m_EditorClassIdentifier: Assembly-CSharp::Game.Inventory.ItemData
-  itemName: Berry
+  itemName: berry
   icon: {fileID: 21300000, guid: 084b11010fdd7dba094c0bdbff05dd25, type: 3}
   energyAmount: 2
   growAmount: 5

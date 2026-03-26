@@ -1,3 +1,4 @@
+using Game.Cooking;
 using Game.Interaction;
 using Game.Player;
 using UI;
@@ -11,12 +12,14 @@ namespace Game.Player
         private PlayerMovement movement;
         private HotbarUI hotbar;
         private Interact interact;
+        private CookingMinigame cookingMinigame;
 
         private void Awake()
         {
             movement = GetComponent<PlayerMovement>();
             hotbar = FindFirstObjectByType<HotbarUI>();
             interact = GetComponent<Interact>();
+            cookingMinigame = FindFirstObjectByType<CookingMinigame>();
         }
 
         public void OnMove(InputAction.CallbackContext context)
@@ -29,8 +32,17 @@ namespace Game.Player
         {
             if (context.performed)
             {
-                Debug.Log("[INPUT] Space pressed (Jump)");
-                movement.Jump();
+                // If cooking minigame is active, Space evaluates cooking instead of jumping
+                if (cookingMinigame && cookingMinigame.IsActive)
+                {
+                    Debug.Log("[INPUT] Space pressed (Cooking Evaluation)");
+                    cookingMinigame.OnSpacePressed();
+                }
+                else
+                {
+                    Debug.Log("[INPUT] Space pressed (Jump)");
+                    movement.Jump();
+                }
             }
         }
 

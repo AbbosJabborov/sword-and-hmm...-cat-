@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff1ab1f644604ddcaa007abe9feb04df, type: 3}
   m_Name: Mushroom
   m_EditorClassIdentifier: Assembly-CSharp::Game.Inventory.ItemData
-  itemName: Mushroom
+  itemName: mushroom
   icon: {fileID: 21300000, guid: c8dffdc3be32227298889694d799c188, type: 3}
   energyAmount: 3
   growAmount: 3

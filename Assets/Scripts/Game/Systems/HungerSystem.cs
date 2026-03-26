@@ -29,14 +29,14 @@ namespace Game.Systems
 
         private PlayerMovement movement;
         private PlayerInventory inventory;
-        private Game.Interaction.Interact interact;
+        private Interaction.Interact interact;
         private Coroutine eatingCoroutine;
 
         private void Awake()
         {
             movement = GetComponent<PlayerMovement>();
             inventory = FindFirstObjectByType<PlayerInventory>();
-            interact = FindFirstObjectByType<Game.Interaction.Interact>();
+            interact = FindFirstObjectByType<Interaction.Interact>();
         }
 
         private void Start()
@@ -168,6 +168,32 @@ namespace Game.Systems
 
             Debug.Log($"[HUNGER] Food energy lookup: {foodName} = {itemData.energyAmount}");
             return itemData.energyAmount;
+        }
+
+        public void EatCooked(string foodName, float energy)
+        {
+            if (energy <= 0)
+            {
+                // Burnt food - remove from inventory but no hunger gain
+                if (inventory && inventory.RemoveItem(foodName, 1))
+                {
+                    Debug.Log($"[HUNGER] Burnt {foodName}! No energy gained. Removed from inventory.");
+                }
+                return;
+            }
+
+            // Apply hunger
+            Eat(energy);
+
+            // Remove from inventory
+            if (inventory && inventory.RemoveItem(foodName, 1))
+            {
+                Debug.Log($"[HUNGER] Ate cooked {foodName}! +{energy} hunger. Removed from inventory. Remaining: {inventory.GetItemCount(foodName)}");
+            }
+            else
+            {
+                Debug.LogWarning($"[HUNGER] Failed to remove {foodName} from inventory!");
+            }
         }
     }
 }
