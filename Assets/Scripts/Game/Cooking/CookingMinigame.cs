@@ -1,155 +1,118 @@
-using DG.Tweening;
-using Game.Inventory;
-using Game.Systems;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using DG.Tweening; // Import DOTween
 
-namespace Game.Cooking
+public class CookingMinigame : MonoBehaviour
 {
-    public class CookingMinigame : MonoBehaviour
+    [Header("UI References")]
+    public Slider indicatorSlider;
+    public RectTransform goodZoneRect; 
+    public RectTransform perfectZoneRect;
+    public TextMeshProUGUI resultText;
+    public RectTransform spatulaHandle; // Optional: Drag the slider handle here to shake it too!
+
+    [Header("Game Settings")]
+    public float moveSpeed = 1.2f; 
+    
+    private float goodZoneMin, goodZoneMax, perfectZoneMin, perfectZoneMax;
+    private float currentValue = 0f;
+    private int direction = 1; 
+    private bool isCooking = false;
+
+    void Start()
     {
-        [Header("Cooking Bar")]
-        [SerializeField] private Image cookingBarFill;
-        [SerializeField] private Image cookingBarBackground;
-        [SerializeField] private TextMeshProUGUI cookingText;
-        [SerializeField] private Canvas cookingCanvas;
+        StartCooking(); 
+    }
 
-        [Header("Zones")]
-        [SerializeField] private float perfectStart = 0.6f; // 60% fill = perfect start
-        [SerializeField] private float perfectEnd = 0.8f; // 80% fill = perfect end
-        [SerializeField] private float goodStart = 0.4f; // 40% fill = good start
-        [SerializeField] private float goodEnd = 0.95f; // 95% fill = good end
-        [SerializeField] private float cookSpeed = 0.5f; // How fast the bar fills (0-1 per second)
+    public void StartCooking()
+    {
+        GenerateRandomZones();
+        currentValue = 0f;
+        direction = 1;
+        isCooking = true;
+        
+        // Reset Text and Scale
+        resultText.DOKill(); // Always kill active tweens before starting new ones
+        resultText.transform.localScale = Vector3.one;
+        resultText.text = "READY... COOK!";
+        resultText.color = Color.white;
+    }
 
-        [Header("Energy Multipliers")]
-        [SerializeField] private float perfectMultiplier = 3f;
-        [SerializeField] private float goodMultiplier = 1.5f;
-        [SerializeField] private float burntMultiplier = 0f;
+    private void GenerateRandomZones()
+    {
+        float goodWidth = Random.Range(0.2f, 0.4f); 
+        goodZoneMin = Random.Range(0.05f, 0.95f - goodWidth); 
+        goodZoneMax = goodZoneMin + goodWidth;
 
-        private float fillAmount = 0f;
-        private bool isCoking = false;
-        private string foodName = "";
-        private float baseEnergy = 0f;
-        private PlayerInventory inventory;
-        private AirQualitySystem airQuality;
+        float perfectWidth = Random.Range(0.05f, 0.15f); 
+        perfectWidth = Mathf.Min(perfectWidth, goodWidth * 0.8f); 
+        
+        perfectZoneMin = Random.Range(goodZoneMin + 0.02f, goodZoneMax - perfectWidth - 0.02f);
+        perfectZoneMax = perfectZoneMin + perfectWidth;
 
-        private void Start()
+        goodZoneRect.anchorMin = new Vector2(goodZoneMin, 0);
+        goodZoneRect.anchorMax = new Vector2(goodZoneMax, 1);
+        perfectZoneRect.anchorMin = new Vector2(perfectZoneMin, 0);
+        perfectZoneRect.anchorMax = new Vector2(perfectZoneMax, 1);
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            if (cookingCanvas)
-                cookingCanvas.gameObject.SetActive(false);
+            if (isCooking) StopAndEvaluate();
+            else StartCooking();
         }
 
-        private void Update()
+        if (!isCooking) return;
+
+        currentValue += direction * moveSpeed * Time.deltaTime;
+        if (currentValue >= 1f) { currentValue = 1f; direction = -1; }
+        else if (currentValue <= 0f) { currentValue = 0f; direction = 1; }
+
+        indicatorSlider.value = currentValue;
+    }
+
+    private void StopAndEvaluate()
+    {
+        isCooking = false;
+        resultText.DOKill(); // Stop any "Ready... Cook" tweens
+
+        if (currentValue >= perfectZoneMin && currentValue <= perfectZoneMax)
         {
-            if (!isCoking) return;
-
-            // Fill bar while cooking
-            fillAmount += cookSpeed * Time.deltaTime;
-            fillAmount = Mathf.Clamp01(fillAmount);
-
-            if (cookingBarFill)
-                cookingBarFill.fillAmount = fillAmount;
-
-            UpdateVisuals();
+            ApplyJuice("PERFECT!", Color.cyan, true);
         }
-
-        public void StartCooking(string foodName, float energy, PlayerInventory inventory, AirQualitySystem airQuality)
+        else if (currentValue >= goodZoneMin && currentValue <= goodZoneMax)
         {
-            this.foodName = foodName;
-            baseEnergy = energy;
-            this.inventory = inventory;
-            this.airQuality = airQuality;
-            fillAmount = 0f;
-            isCoking = true;
-
-            if (cookingCanvas)
-                cookingCanvas.gameObject.SetActive(true);
+            ApplyJuice("GOOD!", Color.yellow, false);
         }
-
-        public void StopCooking()
+        else
         {
-            if (!isCoking) return;
-
-            isCoking = false;
-            EvaluateCooking();
+            ApplyJuice("BURNT!", Color.red, false, true);
         }
+    }
 
-        private void EvaluateCooking()
+    private void ApplyJuice(string msg, Color col, bool isPerfect, bool isBurnt = false)
+    {
+        resultText.text = msg + "\n<size=60%>Space to Retry</size>";
+        resultText.color = col;
+
+        if (isBurnt)
         {
-            string result = "";
-            float multiplier = 0f;
-            Color zoneColor = Color.white;
-
-            if (fillAmount >= perfectStart && fillAmount <= perfectEnd)
-            {
-                result = "PERFECT! ★★★";
-                multiplier = perfectMultiplier;
-                zoneColor = Color.yellow;
-            }
-            else if (fillAmount >= goodStart && fillAmount <= goodEnd)
-            {
-                result = "Good ✓";
-                multiplier = goodMultiplier;
-                zoneColor = Color.green;
-            }
-            else
-            {
-                result = "Burnt ✗";
-                multiplier = burntMultiplier;
-                zoneColor = Color.red;
-            }
-
-            float finalEnergy = baseEnergy * multiplier;
-
-            if (cookingText)
-            {
-                cookingText.text = $"{result}\n{foodName}\n+{finalEnergy:F0} energy";
-                cookingText.color = zoneColor;
-            }
-
-            // Add pollution
-            if (airQuality)
-                airQuality.AddPollution(1f);
-
-            // Create cooked item name based on result
-            string cookedName = $"{foodName}_cooked";
-            if (multiplier == perfectMultiplier)
-                cookedName = $"{foodName}_perfect";
-            else if (multiplier == goodMultiplier)
-                cookedName = $"{foodName}_good";
-            else if (multiplier == 0f)
-                cookedName = $"{foodName}_burnt";
-
-            // Add to inventory with energy metadata (simple version)
-            if (inventory)
-            {
-                inventory.RemoveItem(foodName, 1);
-                inventory.RemoveItem("wood", 1);
-                inventory.AddItem(cookedName, 1);
-            }
-
-            // Close after 2 seconds
-            DOVirtual.DelayedCall(2f, () => {
-                if (cookingCanvas)
-                    cookingCanvas.gameObject.SetActive(false);
-            });
+            // Shake effect for burning
+            resultText.rectTransform.DOShakePosition(0.5f, 20f, 20);
+            if(spatulaHandle) spatulaHandle.DOShakePosition(0.5f, 10f, 15);
         }
-
-        private void UpdateVisuals()
+        else if (isPerfect)
         {
-            // Change bar color based on zone
-            if (cookingBarFill)
-            {
-                if (fillAmount >= perfectStart && fillAmount <= perfectEnd)
-                    cookingBarFill.color = Color.yellow; // Perfect zone
-                else if (fillAmount >= goodStart && fillAmount <= goodEnd)
-                    cookingBarFill.color = Color.green; // Good zone
-                else
-                    cookingBarFill.color = Color.red; // Burnt zone
-            }
+            // Big punch for Perfect
+            resultText.transform.DOPunchScale(Vector3.one * 0.5f, 0.4f, 10, 1f);
         }
-
-        public bool IsActive => isCoking;
+        else
+        {
+            // Small scale pop for Good
+            resultText.transform.DOScale(1.2f, 0.1f).OnComplete(() => resultText.transform.DOScale(1f, 0.1f));
+        }
     }
 }

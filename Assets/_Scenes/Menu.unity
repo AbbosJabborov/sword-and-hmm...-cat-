@@ -310,9 +310,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 632495301}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9cf7a7cd7f0d498b96f83564bea6f0af, type: 3}
+  m_Script: {fileID: 11500000, guid: f9d4e5e008c8315aebf0950448b4756b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Core.MenuToGame
+  m_EditorClassIdentifier: Assembly-CSharp::SceneLoader
 --- !u!1 &706545290
 GameObject:
   m_ObjectHideFlags: 0
@@ -489,13 +489,13 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 632495306}
-        m_TargetAssemblyTypeName: Core.MenuToGame, Assembly-CSharp
-        m_MethodName: PlayGame
-        m_Mode: 1
+        m_TargetAssemblyTypeName: SceneLoader, Assembly-CSharp
+        m_MethodName: LoadScene
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
+          m_IntArgument: 2
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -564,14 +564,14 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1844302759}
   m_Enabled: 1
-  serializedVersion: 11
+  serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
   m_Intensity: 1
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
-  m_CookieSize: 10
+  m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
     m_Type: 2
     m_Resolution: -1
@@ -762,6 +762,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

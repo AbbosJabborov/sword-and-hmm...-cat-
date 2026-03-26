@@ -9,6 +9,7 @@ namespace UI
     public class HotbarUI : MonoBehaviour
     {
         [SerializeField] private PlayerInventory inventory;
+        [SerializeField] private ItemDatabase itemDatabase;
         [SerializeField] private HotbarSlot[] slots = new HotbarSlot[9];
         [SerializeField] private HungerSystem hungerSystem;
 
@@ -19,6 +20,7 @@ namespace UI
         public class HotbarSlot
         {
             public Image slotImage;
+            public Image iconImage;                    // NEW - shows item icon
             public TextMeshProUGUI quantityText;
             public Image highlightImage; 
             public Color highlightedColor = Color.yellow;
@@ -45,6 +47,12 @@ namespace UI
         {
             if (!hungerSystem)
                 hungerSystem = FindFirstObjectByType<HungerSystem>();
+            
+            if (!itemDatabase)
+                itemDatabase = FindFirstObjectByType<ItemDatabase>();
+
+            if (!itemDatabase)
+                Debug.LogError("[HOTBAR] ItemDatabase not found!");
             
             UpdateHotbar("", 0);
         }
@@ -97,6 +105,22 @@ namespace UI
                 if (slots[i].slotImage)
                     slots[i].slotImage.color = quantity > 0 ? Color.white : Color.grey;
 
+                // Update icon from ItemDatabase
+                if (slots[i].iconImage)
+                {
+                    if (!string.IsNullOrEmpty(itemInSlot) && itemDatabase)
+                    {
+                        ItemData itemData = itemDatabase.GetItemByName(itemInSlot);
+                        slots[i].iconImage.sprite = itemData ? itemData.icon : null;
+                        slots[i].iconImage.color = Color.white;
+                    }
+                    else
+                    {
+                        slots[i].iconImage.sprite = null;
+                        slots[i].iconImage.color = Color.clear;
+                    }
+                }
+
                 // Highlight selected slot
                 if (slots[i].highlightImage)
                 {
@@ -116,14 +140,23 @@ namespace UI
             return string.IsNullOrEmpty(item) ? 0 : inventory.GetItemCount(item);
         }
 
-        public float GetFoodEnergy(string foodName)
+        public float GetFoodEnergy(string itemName)
         {
-            return foodName.ToLower() switch
+            if (!itemDatabase)
             {
-                "berry" => 5f,
-                "mushroom" => 8f,
-                _ => 0f
-            };
+                Debug.LogError("[HOTBAR] ItemDatabase not assigned!");
+                return 0f;
+            }
+
+            ItemData itemData = itemDatabase.GetItemByName(itemName);
+            if (!itemData)
+            {
+                Debug.LogWarning($"[HOTBAR] Item '{itemName}' not found in database!");
+                return 0f;
+            }
+
+            Debug.Log($"[HOTBAR] Food energy for {itemName}: {itemData.energyAmount}");
+            return itemData.energyAmount;
         }
     }
 }

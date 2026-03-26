@@ -5,9 +5,9 @@ namespace Core
 {
     public class MenuToGame : MonoBehaviour
     {
-        public void PlayGame()
+        public void PlayGame(int sceneID)
         {
-            SceneManager.LoadScene(2);
+            SceneManager.LoadScene(sceneID);
         }
     }
 }

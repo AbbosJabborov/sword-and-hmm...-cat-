@@ -10,9 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ff1ab1f644604ddcaa007abe9feb04df, type: 3}
-  m_Name: Sword
+  m_Name: Carrot
   m_EditorClassIdentifier: Assembly-CSharp::Game.Inventory.ItemData
-  itemName: Sword?
-  icon: {fileID: 21300000, guid: 41521149fdf24fcd58f2342e0650cac3, type: 3}
-  description: this is wooden sword
-  maxStack: 1
+  itemName: Carrot
+  icon: {fileID: 21300000, guid: 09b55ffc3c728dadc8ae171e5f403995, type: 3}
+  energyAmount: 4
+  growAmount: 2
+  resourceType: 0

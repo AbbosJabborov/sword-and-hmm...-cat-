@@ -5,9 +5,8 @@ namespace Game.Interaction
 {
     public class ResourceNode : MonoBehaviour, IInteractable
     {
-        public enum ResourceType { Berry, Mushroom, Tree, Water }
-        
-        [SerializeField] private ResourceType resourceType;
+        [SerializeField] private ItemData itemData; // The item this node produces when harvested
+        [SerializeField] private ItemData seedData; // Optional: seed produced when extracting (for later)
         [SerializeField] private int harvestAmountMin = 2;
         [SerializeField] private int harvestAmountMax = 4;
         [SerializeField] private float respawnTime = 120f;
@@ -21,6 +20,12 @@ namespace Game.Interaction
 
         private float respawnTimer = 0f;
         private bool canHarvest = true;
+
+        private void Start()
+        {
+            if (!itemData)
+                Debug.LogError($"[RESOURCE] {gameObject.name} has no ItemData assigned!");
+        }
 
         private void Update()
         {
@@ -36,7 +41,13 @@ namespace Game.Interaction
         {
             if (!canHarvest)
             {
-                Debug.Log($"[RESOURCE] {resourceType} is depleted. Will respawn in {respawnTimer:F0}s");
+                Debug.Log($"[RESOURCE] {itemData.itemName} is depleted. Will respawn in {respawnTimer:F0}s");
+                return;
+            }
+
+            if (!itemData)
+            {
+                Debug.LogError("[RESOURCE] ItemData is null!");
                 return;
             }
 
@@ -56,20 +67,11 @@ namespace Game.Interaction
 
             int amount = Random.Range(harvestAmountMin, harvestAmountMax + 1);
 
-            string itemName = resourceType switch
-            {
-                ResourceType.Berry => "berry",
-                ResourceType.Mushroom => "mushroom",
-                ResourceType.Tree => "wood",
-                ResourceType.Water => "water",
-                _ => "unknown"
-            };
-
-            inventory.AddItem(itemName, amount);
+            inventory.AddItem(itemData.itemName, amount);
             PlayEffects(harvestSound, harvestEffect);
             Deplete();
             
-            Debug.Log($"[RESOURCE] Harvested {amount}x {itemName} from {resourceType}");
+            Debug.Log($"[RESOURCE] Harvested {amount}x {itemData.itemName}");
         }
 
         private void Deplete()
@@ -79,7 +81,7 @@ namespace Game.Interaction
             if (visualModel)
                 visualModel.SetActive(false);
             
-            Debug.Log($"[RESOURCE] {resourceType} depleted. Will respawn in {respawnTime}s");
+            Debug.Log($"[RESOURCE] {itemData.itemName} depleted. Will respawn in {respawnTime}s");
         }
 
         private void Respawn()
@@ -87,7 +89,7 @@ namespace Game.Interaction
             canHarvest = true;
             if (visualModel)
                 visualModel.SetActive(true);
-            Debug.Log($"[RESOURCE] {resourceType} has respawned!");
+            Debug.Log($"[RESOURCE] {itemData.itemName} has respawned!");
         }
 
         private void PlayEffects(AudioClip sound, GameObject effect)

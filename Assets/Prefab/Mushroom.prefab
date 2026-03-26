@@ -128,7 +128,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c85d98983ce4ed2acbcc3b88301a21b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Interaction.ResourceNode
-  resourceType: 1
+  itemData: {fileID: 11400000, guid: aa6b3e003517f766a9eacdcef0c4b975, type: 2}
+  seedData: {fileID: 11400000, guid: fe3e41852aea2887e8aceb6ab082aa45, type: 2}
   harvestAmountMin: 2
   harvestAmountMax: 4
   respawnTime: 120
