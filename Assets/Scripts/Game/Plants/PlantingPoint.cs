@@ -1,72 +1,111 @@
 using Game.Interaction;
 using Game.Inventory;
-using Game.Plants;
 using UnityEngine;
 
 namespace Game.Plants
 {
     public class PlantingPoint : MonoBehaviour, IInteractable
     {
-        [SerializeField] private PlantedPlant plantedPlantPrefab;
-        [SerializeField] private float plantingRange = 1.5f;
+        [SerializeField] private float interactRange = 2f;
+        [SerializeField] private GameObject plantPrefab;
+        [SerializeField] private Transform plantSpawnPoint; // Where the plant grows
 
-        private bool _isOccupied = false;
+        private PlantedPlant currentPlant;
+        private ItemDatabase itemDatabase;
+
+        public bool IsOccupied => currentPlant != null;
+
+        private void Start()
+        {
+            itemDatabase = FindFirstObjectByType<ItemDatabase>();
+            if (!itemDatabase)
+                Debug.LogError("[PLANT] ItemDatabase not found!");
+            if (!plantPrefab)
+                Debug.LogError("[PLANT] Plant prefab not assigned!");
+            
+            Debug.Log("[PLANT] PlantingPoint initialized at " + transform.position);
+        }
 
         public void Interact(GameObject interactor)
         {
-            if (_isOccupied)
+            // If already has a plant, that plant handles interaction
+            if (IsOccupied)
             {
-                Debug.Log("Planting spot already occupied!");
+                Debug.Log("[PLANT] This planting point is occupied, cannot plant here");
                 return;
             }
 
-            var inventory = interactor.GetComponent<PlayerInventory>();
-            if (inventory == null) return;
+            // Get interactor's inventory and hotbar
+            PlayerInventory inventory = interactor.GetComponent<PlayerInventory>();
+            UI.HotbarUI hotbar = FindFirstObjectByType<UI.HotbarUI>();
 
-            // Player gets to choose what to plant (berry or mushroom)
-            // For now, just plant berries
-            if (inventory.HasItem("berry", 1))
+            if (!inventory || !hotbar)
             {
-                inventory.RemoveItem("berry", 1);
-                PlantBerry();
+                Debug.LogError("[PLANT] Could not find inventory or hotbar!");
+                return;
             }
-            else if (inventory.HasItem("mushroom", 1))
+
+            // Get selected item from hotbar
+            string selectedItem = hotbar.GetCurrentSelectedItem();
+            int quantity = hotbar.GetCurrentSelectedQuantity();
+
+            if (string.IsNullOrEmpty(selectedItem) || quantity == 0)
             {
-                inventory.RemoveItem("mushroom", 1);
-                PlantMushroom();
+                Debug.Log("[PLANT] No item selected!");
+                return;
             }
-            else
+
+            // Check if it's a seed
+            ItemData itemData = itemDatabase.GetItemByName(selectedItem);
+            if (!itemData || itemData.resourceType != ItemData.ResourceType.Seed)
             {
-                Debug.Log("No seeds to plant!");
+                Debug.Log($"[PLANT] {selectedItem} is not a seed!");
+                return;
             }
+
+            // Plant the seed
+            PlantSeed(selectedItem, itemData, inventory);
         }
 
-        private void PlantBerry()
+        public void PlantSeed(string seedName, ItemData seedData, PlayerInventory inventory)
         {
-            PlantedPlant newPlant = Instantiate(plantedPlantPrefab, transform.position, Quaternion.identity);
-            newPlant.GetComponent<PlantedPlant>().plantType = PlantedPlant.PlantType.Berry;
-            _isOccupied = true;
-            Debug.Log("Berry planted!");
+            // Remove seed from inventory
+            if (!inventory.RemoveItem(seedName, 1))
+            {
+                Debug.LogError("[PLANT] Failed to remove seed from inventory!");
+                return;
+            }
+
+            // Instantiate plant
+            Transform spawnPoint = plantSpawnPoint ? plantSpawnPoint : transform;
+            GameObject plantObj = Instantiate(plantPrefab, spawnPoint.position, Quaternion.identity, transform);
+            
+            currentPlant = plantObj.GetComponent<PlantedPlant>();
+            if (!currentPlant)
+            {
+                Debug.LogError("[PLANT] Plant prefab doesn't have PlantedPlant component!");
+                Destroy(plantObj);
+                return;
+            }
+
+            // Initialize plant
+            currentPlant.Initialize(seedName, seedData, this);
+            
+            Debug.Log($"[PLANT] Planted {seedName} at {transform.position}. Will mature in {seedData.growthTime} seconds.");
         }
 
-        private void PlantMushroom()
-        {
-            PlantedPlant newPlant = Instantiate(plantedPlantPrefab, transform.position, Quaternion.identity);
-            newPlant.GetComponent<PlantedPlant>().plantType = PlantedPlant.PlantType.Mushroom;
-            _isOccupied = true;
-            Debug.Log("Mushroom planted!");
-        }
+        public PlantedPlant GetPlant() => currentPlant;
 
-        // Call this if plant dies or is harvested permanently
-        public void ResetPoint()
+        public void OnPlantHarvested()
         {
-            _isOccupied = false;
+            currentPlant = null;
+            Debug.Log("[PLANT] Plant harvested, planting point is now empty");
         }
 
         private void OnDrawGizmosSelected()
         {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireCube(transform.position, Vector3.one * plantingRange);
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireCube(transform.position, Vector3.one * 1.5f);
         }
     }
 }

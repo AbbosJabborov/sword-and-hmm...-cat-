@@ -1,4 +1,6 @@
-﻿using Game.Systems;
+﻿using Game.Inventory;
+using Game.Plants;
+using Game.Systems;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,6 +12,8 @@ namespace Game.Interaction
         None,
         Gather,
         Cook,
+        Plant,
+        Harvest,
         Eat
     }
 
@@ -29,6 +33,8 @@ namespace Game.Interaction
         private HungerSystem hungerSystem;
         private UI.HotbarUI hotbar;
         private CookingStation currentCookingStation;
+        private PlantingPoint currentPlantingPoint;
+        private PlantedPlant currentPlantedPlant;
         private InteractionType currentInteractionType = InteractionType.None;
         private bool isHoldingConsume = false;
 
@@ -47,13 +53,30 @@ namespace Game.Interaction
             Collider[] hits = Physics.OverlapSphere(transform.position, interactRange, interactableLayer);
             currentInteractable = null;
             currentCookingStation = null;
+            currentPlantingPoint = null;
+            currentPlantedPlant = null;
             currentInteractionType = InteractionType.None;
 
             foreach (var hit in hits)
             {
-                IInteractable interactable = hit.GetComponent<IInteractable>();
-                CookingStation cookingStation = hit.GetComponent<CookingStation>();
+                // Check for PlantedPlant (mature plant to harvest)
+                PlantedPlant plantedPlant = hit.GetComponent<PlantedPlant>();
+                if (plantedPlant != null && plantedPlant.IsMatured)
+                {
+                    currentPlantedPlant = plantedPlant;
+                    currentInteractionType = InteractionType.Harvest;
+                    
+                    if (interactPrompt)
+                        interactPrompt.text = "[F] Harvest";
+                    
+                    if (consumePrompt)
+                        consumePrompt.text = "";
+                    
+                    break;
+                }
 
+                // Check for CookingStation
+                CookingStation cookingStation = hit.GetComponent<CookingStation>();
                 if (cookingStation != null)
                 {
                     currentCookingStation = cookingStation;
@@ -67,7 +90,36 @@ namespace Game.Interaction
                     
                     break;
                 }
-                else if (interactable != null)
+
+                // Check for PlantingPoint (for planting)
+                PlantingPoint plantingPoint = hit.GetComponent<PlantingPoint>();
+                if (plantingPoint != null && !plantingPoint.IsOccupied)
+                {
+                    currentPlantingPoint = plantingPoint;
+                    currentInteractionType = InteractionType.Plant;
+                    
+                    // Show what seed we have selected (if any)
+                    string selectedSeed = hotbar ? hotbar.GetCurrentSelectedItem() : "";
+                    if (!string.IsNullOrEmpty(selectedSeed))
+                    {
+                        if (interactPrompt)
+                            interactPrompt.text = $"[F] Plant {selectedSeed}";
+                    }
+                    else
+                    {
+                        if (interactPrompt)
+                            interactPrompt.text = "[F] Plant";
+                    }
+                    
+                    if (consumePrompt)
+                        consumePrompt.text = "";
+                    
+                    break;
+                }
+
+                // Check for regular interactable (gather)
+                IInteractable interactable = hit.GetComponent<IInteractable>();
+                if (interactable != null)
                 {
                     currentInteractable = interactable;
                     currentInteractionType = InteractionType.Gather;
@@ -83,7 +135,8 @@ namespace Game.Interaction
             }
 
             // Check if player has food selected in hotbar
-            if (currentInteractable == null && currentCookingStation == null && hotbar)
+            if (currentInteractable == null && currentCookingStation == null && 
+                currentPlantingPoint == null && currentPlantedPlant == null && hotbar)
             {
                 string selectedFood = hotbar.GetCurrentSelectedItem();
                 if (!string.IsNullOrEmpty(selectedFood))
@@ -94,8 +147,7 @@ namespace Game.Interaction
                         interactPrompt.text = "";
                     
                     if (consumePrompt)
-                        consumePrompt.text = $"[R] Eat";
-                        //consumePrompt.text = $"[R] Eat ({selectedFood})";
+                        consumePrompt.text = $"[R] Eat ({selectedFood})";
                 }
                 else
                 {
@@ -105,7 +157,9 @@ namespace Game.Interaction
             }
 
             // Clear prompts if nothing nearby
-            if (currentInteractable == null && currentCookingStation == null && currentInteractionType == InteractionType.None)
+            if (currentInteractable == null && currentCookingStation == null && 
+                currentPlantingPoint == null && currentPlantedPlant == null && 
+                currentInteractionType == InteractionType.None)
             {
                 if (interactPrompt)
                     interactPrompt.text = "";
@@ -116,15 +170,39 @@ namespace Game.Interaction
 
         public void OnInteract(GameObject interactor)
         {
-            if (currentInteractionType == InteractionType.Gather && currentInteractable != null)
+            switch (currentInteractionType)
             {
-                Debug.Log($"[INTERACT] Interaction type: Gather");
-                currentInteractable.Interact(interactor);
-            }
-            else if (currentInteractionType == InteractionType.Cook && currentCookingStation != null)
-            {
-                Debug.Log($"[INTERACT] Interaction type: Cook");
-                currentCookingStation.Interact(interactor);
+                case InteractionType.Gather:
+                    if (currentInteractable != null)
+                    {
+                        Debug.Log($"[INTERACT] Interaction type: Gather");
+                        currentInteractable.Interact(interactor);
+                    }
+                    break;
+
+                case InteractionType.Cook:
+                    if (currentCookingStation != null)
+                    {
+                        Debug.Log($"[INTERACT] Interaction type: Cook");
+                        currentCookingStation.Interact(interactor);
+                    }
+                    break;
+
+                case InteractionType.Plant:
+                    if (currentPlantingPoint != null)
+                    {
+                        Debug.Log($"[INTERACT] Interaction type: Plant");
+                        currentPlantingPoint.Interact(interactor);
+                    }
+                    break;
+
+                case InteractionType.Harvest:
+                    if (currentPlantedPlant != null)
+                    {
+                        Debug.Log($"[INTERACT] Interaction type: Harvest");
+                        currentPlantedPlant.Interact(interactor);
+                    }
+                    break;
             }
         }
 

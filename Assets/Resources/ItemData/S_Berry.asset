@@ -16,4 +16,5 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 05b08c2c6c51fda41abf553f3d7f1b01, type: 3}
   energyAmount: 2
   growAmount: 5
+  growthTime: 15
   resourceType: 1

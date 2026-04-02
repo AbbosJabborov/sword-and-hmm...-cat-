@@ -29,6 +29,7 @@ namespace Game.Cooking
         private float _baseEnergy = 0f;
         private PlayerInventory _inventory;
         private HungerSystem _hungerSystem;
+        private Game.Systems.AirQualitySystem _airQualitySystem;
 
         private void Start()
         {
@@ -59,12 +60,14 @@ namespace Game.Cooking
         }
 
         public void StartCooking(string foodName, float baseEnergy, 
-                                 PlayerInventory inventory, HungerSystem hungerSystem)
+                                 PlayerInventory inventory, HungerSystem hungerSystem,
+                                 Game.Systems.AirQualitySystem airQualitySystem)
         {
             _foodName = foodName;
             _baseEnergy = baseEnergy;
             _inventory = inventory;
             _hungerSystem = hungerSystem;
+            _airQualitySystem = airQualitySystem;
 
             GenerateRandomZones();
             currentValue = 0f;
@@ -112,6 +115,7 @@ namespace Game.Cooking
             resultText.DOKill();
 
             float finalEnergy = 0f;
+            float pollutionAmount = 0f;
             string resultMsg = "";
             Color resultColor = Color.white;
             bool isPerfect = false;
@@ -119,27 +123,40 @@ namespace Game.Cooking
             if (currentValue >= perfectZoneMin && currentValue <= perfectZoneMax)
             {
                 finalEnergy = _baseEnergy * 3f;
+                pollutionAmount = 1.0f; // Perfect cook = least pollution
                 resultMsg = "PERFECT!";
                 resultColor = Color.cyan;
                 isPerfect = true;
-                Debug.Log($"[COOKING] PERFECT! {_foodName} × 3 = {finalEnergy} energy");
+                Debug.Log($"[COOKING] PERFECT! {_foodName} × 3 = {finalEnergy} energy (+{pollutionAmount} pollution)");
                 ApplyJuice(resultMsg, resultColor, isPerfect);
             }
             else if (currentValue >= goodZoneMin && currentValue <= goodZoneMax)
             {
                 finalEnergy = _baseEnergy * 1.5f;
+                pollutionAmount = 1.5f; // Good cook = medium pollution
                 resultMsg = "GOOD!";
                 resultColor = Color.yellow;
-                Debug.Log($"[COOKING] GOOD! {_foodName} × 1.5 = {finalEnergy} energy");
+                Debug.Log($"[COOKING] GOOD! {_foodName} × 1.5 = {finalEnergy} energy (+{pollutionAmount} pollution)");
                 ApplyJuice(resultMsg, resultColor, false);
             }
             else
             {
                 finalEnergy = 0f;
+                pollutionAmount = 2.0f; // Burnt cook = most pollution (waste)
                 resultMsg = "BURNT!";
                 resultColor = Color.red;
-                Debug.Log($"[COOKING] BURNT! {_foodName} × 0 = 0 energy (wasted)");
+                Debug.Log($"[COOKING] BURNT! {_foodName} × 0 = 0 energy (+{pollutionAmount} pollution - most waste)");
                 ApplyJuice(resultMsg, resultColor, false, true);
+            }
+
+            // Add pollution to air quality system
+            if (_airQualitySystem)
+            {
+                _airQualitySystem.AddPollution(pollutionAmount);
+            }
+            else
+            {
+                Debug.LogWarning("[COOKING] AirQualitySystem reference is null!");
             }
 
             // Apply to hunger system

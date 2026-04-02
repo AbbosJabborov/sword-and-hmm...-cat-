@@ -11,17 +11,20 @@ namespace Game.Interaction
         [SerializeField] private CookingMinigame cookingMinigame;
         [SerializeField] private AudioClip cookingStartSound;
 
-        private HotbarUI hotbar;
-        private PlayerInventory inventory;
-        private HungerSystem hungerSystem;
-        private ItemDatabase itemDatabase;
+        private HotbarUI _hotbar;
+        private PlayerInventory _inventory;
+        private HungerSystem _hungerSystem;
+        private ItemDatabase _itemDatabase;
+        private Game.Systems.AirQualitySystem _airQualitySystem;
 
         private void Start()
         {
-            hotbar = FindFirstObjectByType<HotbarUI>();
-            inventory = FindFirstObjectByType<PlayerInventory>();
-            hungerSystem = FindFirstObjectByType<HungerSystem>();
-            itemDatabase = FindFirstObjectByType<ItemDatabase>();
+            _hotbar = FindFirstObjectByType<HotbarUI>();
+            _inventory = FindFirstObjectByType<PlayerInventory>();
+            _hungerSystem = FindFirstObjectByType<HungerSystem>();
+            _itemDatabase = FindFirstObjectByType<ItemDatabase>();
+            _airQualitySystem = FindFirstObjectByType<Game.Systems.AirQualitySystem>();
+            
         }
 
         public void Interact(GameObject interactor)
@@ -33,8 +36,8 @@ namespace Game.Interaction
             }
 
             // Get selected food from hotbar
-            string selectedFood = hotbar.GetCurrentSelectedItem();
-            int quantity = hotbar.GetCurrentSelectedQuantity();
+            string selectedFood = _hotbar.GetCurrentSelectedItem();
+            int quantity = _hotbar.GetCurrentSelectedQuantity();
 
             if (string.IsNullOrEmpty(selectedFood) || quantity == 0)
             {
@@ -50,7 +53,7 @@ namespace Game.Interaction
             }
 
             // Get energy from ItemDatabase
-            float energy = hotbar.GetFoodEnergy(selectedFood);
+            float energy = _hotbar.GetFoodEnergy(selectedFood);
             if (energy <= 0)
             {
                 Debug.Log($"[COOKING] {selectedFood} has no energy value!");
@@ -60,7 +63,7 @@ namespace Game.Interaction
             Debug.Log($"[COOKING] Starting minigame for {selectedFood} (base energy: {energy})");
 
             // Start cooking minigame
-            cookingMinigame.StartCooking(selectedFood, energy, inventory, hungerSystem);
+            cookingMinigame.StartCooking(selectedFood, energy, _inventory, _hungerSystem, _airQualitySystem);
 
             // Play sound
             if (cookingStartSound)

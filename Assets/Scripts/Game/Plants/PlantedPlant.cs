@@ -1,118 +1,164 @@
 using Game.Interaction;
 using Game.Inventory;
-using Game.Systems;
 using UnityEngine;
 
 namespace Game.Plants
 {
     public class PlantedPlant : MonoBehaviour, IInteractable
     {
-        public enum PlantType { Berry, Mushroom }
-        
-        [SerializeField] public PlantType plantType;
-        [SerializeField] private int maxGrowthStage = 5;
-        [SerializeField] private float growthTimePerStage = 60f; // seconds
-        [SerializeField] private Mesh[] growthModels; // Different mesh for each stage
+        [Header("Growth Settings")]
+        [SerializeField] private float baseGrowthTime = 60f; // Seconds to mature
+        [SerializeField] private Renderer plantRenderer;
 
-        [Header("Harvesting")]
-        [SerializeField] private int harvestAmount = 2;
-        [SerializeField] private bool regrows = true;
-        
-        [Header("Visuals")]
-        [SerializeField] private MeshFilter meshFilter;
-        [SerializeField] private AudioClip harvestSound;
-        [SerializeField] private GameObject harvestEffect;
+        [Header("Visual Stages")]
+        [SerializeField] private GameObject stage0Prefab; // Sprout
+        [SerializeField] private GameObject stage1Prefab; // Growing
+        [SerializeField] private GameObject stage2Prefab; // Tall
+        [SerializeField] private GameObject stage3Prefab; // Mature
 
-        private int _currentGrowthStage = 0;
-        private float _growthTimer = 0f;
-        private bool _isWatered = false;
-        private AirQualitySystem _airQuality;
+        private string seedName;
+        private ItemData seedData;
+        private float growthTime;
+        private float elapsedTime;
+        private PlantingPoint plantingPoint;
+        private ItemDatabase itemDatabase;
+        private int currentStage = -1;
 
-        private void Start()
-        {
-            _airQuality = FindFirstObjectByType<AirQualitySystem>();
-            UpdateVisuals();
-        }
+        public float GrowthPercent => Mathf.Clamp01(elapsedTime / growthTime);
+        public bool IsMatured => GrowthPercent >= 1.0f;
 
         private void Update()
         {
-            if (_currentGrowthStage >= maxGrowthStage) return;
-
-            // Grow faster if watered
-            float growthRate = _isWatered ? 1.5f : 1f;
-            _growthTimer += Time.deltaTime * growthRate;
-
-            if (_growthTimer >= growthTimePerStage)
+            if (!IsMatured)
             {
-                _currentGrowthStage++;
-                _growthTimer = 0f;
-                _isWatered = false; // Need to water again next cycle
+                elapsedTime += Time.deltaTime;
                 UpdateVisuals();
 
-                // Add air quality when plant grows (purifies air)
-                if (_airQuality)
-                    _airQuality.AddCleanAir(0.5f);
-
-                Debug.Log($"Plant grew to stage {_currentGrowthStage}");
+                if (IsMatured)
+                {
+                    OnMatured();
+                }
             }
         }
 
-        public void Water()
+        public void Initialize(string seedName, ItemData seedData, PlantingPoint plantingPoint)
         {
-            _isWatered = true;
-            Debug.Log("Plant watered!");
-        }
+            this.seedName = seedName;
+            this.seedData = seedData;
+            this.plantingPoint = plantingPoint;
+            this.elapsedTime = 0f;
+            
+            // Use growthTime from ItemData if available, otherwise use default
+            this.growthTime = seedData.growthTime > 0 ? seedData.growthTime : baseGrowthTime;
 
-        public void Interact(GameObject interactor)
-        {
-            if (_currentGrowthStage < maxGrowthStage)
-            {
-                Debug.Log($"Plant not ready yet. Growth: {_currentGrowthStage}/{maxGrowthStage}");
-                return;
-            }
+            itemDatabase = FindFirstObjectByType<ItemDatabase>();
+            
+            UpdateVisuals();
 
-            // Harvest
-            var inventory = interactor.GetComponent<PlayerInventory>();
-            if (inventory == null)
-            {
-                Debug.LogWarning("Interactor has no PlayerInventory!");
-                return;
-            }
-
-            string itemName = plantType == PlantType.Berry ? "berry" : "mushroom";
-            inventory.AddItem(itemName, harvestAmount);
-
-            if (harvestSound)
-                AudioSource.PlayClipAtPoint(harvestSound, transform.position);
-            if (harvestEffect)
-                Instantiate(harvestEffect, transform.position, Quaternion.identity);
-
-            if (regrows)
-            {
-                _currentGrowthStage = 0;
-                _growthTimer = 0f;
-                _isWatered = false;
-                UpdateVisuals();
-                Debug.Log("Plant regrew!");
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
+            Debug.Log($"[PLANT] Initialized {seedName}. Growth time: {growthTime}s, Growth amount: {seedData.growAmount}");
         }
 
         private void UpdateVisuals()
         {
-            // Update mesh if we have growth models
-            if (growthModels != null && growthModels.Length > _currentGrowthStage && meshFilter)
-                meshFilter.mesh = growthModels[_currentGrowthStage];
+            float percent = GrowthPercent;
+            int newStage = GetStage(percent);
 
-            // Scale up as it grows
-            float scale = 0.5f + _currentGrowthStage * 0.1f;
+            if (newStage != currentStage)
+            {
+                currentStage = newStage;
+                UpdateStageVisuals();
+            }
+
+            // Scale gradually
+            float scale = Mathf.Lerp(0.5f, 1.2f, percent);
             transform.localScale = Vector3.one * scale;
+
+            // Color brightens as it matures
+            if (plantRenderer)
+            {
+                Color matureColor = new Color(0.2f, 1f, 0.2f); // Green
+                Color seedColor = new Color(0.6f, 0.6f, 0.6f); // Grey
+                Color newColor = Color.Lerp(seedColor, matureColor, percent);
+                plantRenderer.material.color = newColor;
+            }
         }
 
-        public float GrowthPercent => (float)_currentGrowthStage / maxGrowthStage;
-        public bool IsFullyGrown => _currentGrowthStage >= maxGrowthStage;
+        private int GetStage(float growthPercent)
+        {
+            if (growthPercent < 0.25f) return 0;
+            if (growthPercent < 0.50f) return 1;
+            if (growthPercent < 0.75f) return 2;
+            return 3;
+        }
+
+        private void UpdateStageVisuals()
+        {
+            // Disable all stages
+            if (stage0Prefab) stage0Prefab.SetActive(false);
+            if (stage1Prefab) stage1Prefab.SetActive(false);
+            if (stage2Prefab) stage2Prefab.SetActive(false);
+            if (stage3Prefab) stage3Prefab.SetActive(false);
+
+            // Enable current stage
+            switch (currentStage)
+            {
+                case 0:
+                    if (stage0Prefab) stage0Prefab.SetActive(true);
+                    break;
+                case 1:
+                    if (stage1Prefab) stage1Prefab.SetActive(true);
+                    break;
+                case 2:
+                    if (stage2Prefab) stage2Prefab.SetActive(true);
+                    break;
+                case 3:
+                    if (stage3Prefab) stage3Prefab.SetActive(true);
+                    break;
+            }
+
+            Debug.Log($"[PLANT] {seedName} stage: {currentStage} ({GrowthPercent * 100:F0}%)");
+        }
+
+        private void OnMatured()
+        {
+            Debug.Log($"[PLANT] {seedName} is now mature and ready to harvest!");
+        }
+
+        public void Interact(GameObject interactor)
+        {
+            if (!IsMatured)
+            {
+                Debug.Log($"[PLANT] {seedName} is not ready to harvest yet ({GrowthPercent * 100:F0}%)");
+                return;
+            }
+
+            Harvest(interactor);
+        }
+
+        public void Harvest(GameObject harvester)
+        {
+            PlayerInventory inventory = harvester.GetComponent<PlayerInventory>();
+            if (!inventory)
+            {
+                Debug.LogError("[PLANT] Could not find inventory!");
+                return;
+            }
+
+            // Get harvest item name (remove "_seed" suffix)
+            string harvestName = seedName.Replace("_seed", "");
+            int harvestAmount = seedData.growAmount;
+
+            // Add harvested items to inventory
+            inventory.AddItem(harvestName, harvestAmount);
+
+            Debug.Log($"[PLANT] Harvested {harvestAmount}x {harvestName} from {seedName}!");
+
+            // Notify planting point
+            if (plantingPoint)
+                plantingPoint.OnPlantHarvested();
+
+            // Destroy plant
+            Destroy(gameObject);
+        }
     }
 }
