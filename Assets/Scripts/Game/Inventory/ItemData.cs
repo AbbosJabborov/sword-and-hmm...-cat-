@@ -9,6 +9,7 @@ namespace Game.Inventory
         
         public string itemName;
         public Sprite icon;
+        public Sprite imageIcon;
         
         [Header("Food")]
         public int energyAmount; // if its food, this is the value that will provide to hunger bar
